@@ -25,18 +25,22 @@ def create_tables():
         )
         """)
         cursor.execute("""
-        CREATE TABLE IF NOT EXISTS feelings (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            log_date TEXT NOT NULL,
-            energy INTEGER,
-            mood INTEGER,
-            stress INTEGER,
-            note TEXT,
-            FOREIGN KEY(user_id) REFERENCES habits(user_id)
-        )
-        """)
-
+                CREATE TABLE IF NOT EXISTS feelings (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    log_date TEXT NOT NULL,
+                    energy INTEGER,
+                    mood INTEGER,
+                    stress INTEGER,
+                    note TEXT
+                )
+                """)
+        cursor.execute("""
+                CREATE TABLE IF NOT EXISTS reminders (
+                    user_id INTEGER PRIMARY KEY,
+                    time TEXT NOT NULL
+                )
+                """)
         conn.commit()
 
 
@@ -140,5 +144,16 @@ def get_habit_stats(user_id: int, habit_id: int):
         pct = (days_done / total_days * 100) if total_days else 0
 
         return habit_name, days_done, total_days, pct
+
+
+def set_reminder_time(user_id: int, time_str: str):
+    with sqlite3.connect(DB_NAME) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO reminders (user_id, time)
+        VALUES (?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET time=excluded.time
+        """, (user_id, time_str))
+        conn.commit()
 
 
